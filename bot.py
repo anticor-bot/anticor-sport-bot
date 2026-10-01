@@ -1,5 +1,7 @@
-import asyncio
+﻿import asyncio
 import logging
+import os
+from aiohttp import web
 from aiogram import Bot, Dispatcher, F, types
 from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
@@ -8,7 +10,6 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup
 
 BOT_TOKEN = "8333608600:AAEVECVuKvn0BSnv8ZEqkme_XsFPCv1R4_4"
-
 logging.basicConfig(level=logging.INFO)
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(storage=MemoryStorage())
@@ -90,7 +91,7 @@ async def show_npa(message: types.Message, state: FSMContext):
         text = "📚 **Основное антикоррупционное законодательство Кыргызской Республики:**\n\n1. **Закон КР «О противодействии коррупции»**\n2. **Закон КР «О конфликте интересов»**\n3. **Закон КР «О государственной гражданской службе и муниципальной службе»**\n4. **Уголовный кодекс КР (Глава 42)**\n5. **Кодекс этики государственных и муниципальных служащих КР**."
     await message.answer(text, parse_mode="Markdown")
 
-@dp.message(F.text.in_(["⚠️ Кызыкчылыктар кагылышы", "⚠️️ Конфликт интересов"]))
+@dp.message(F.text.in_(["⚠️ Кызыкчылыктар кагылышы", "⚠️ Конфликт интересов"]))
 async def show_conflict(message: types.Message, state: FSMContext):
     data = await state.get_data()
     lang = data.get("language", "ru")
@@ -153,7 +154,20 @@ async def show_report_info(message: types.Message, state: FSMContext):
         text = "📞 **Куда обращаться при фактах коррупции:**\n\n• **Генеральная прокуратура КР:** +996 (312) 54-28-18\n• **ГКНБ КР:** +996 (312) 66-04-75\n• **МВД КР:** 102\n\n*Законодательством КР гарантируется защита лиц, сообщивших о фактах коррупции.*"
     await message.answer(text, parse_mode="Markdown")
 
+async def handle(request):
+    return web.Response(text="Bot is active")
+
+async def start_web_server():
+    app = web.Application()
+    app.router.add_get("/", handle)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    port = int(os.environ.get("PORT", 10000))
+    site = web.TCPSite(runner, "0.0.0.0", port)
+    await site.start()
+
 async def main():
+    await start_web_server()
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
